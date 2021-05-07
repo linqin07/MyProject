@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>MyProject</artifactId>
+        <groupId>org.example</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>es6</artifactId>
+
+    <name>es6</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <es.version>6.3.0</es.version>
+        <es-sql.version>6.3.0.0</es-sql.version>
+    </properties>
+
+    <dependencies>
+        <!-- 引入公共依赖-->
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- ES -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${es.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>transport</artifactId>
+            <version>${es.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch.plugin</groupId>
+            <artifactId>transport-netty4-client</artifactId>
+            <version>${es.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.nlpcn</groupId>
+            <artifactId>elasticsearch-sql</artifactId>
+            <version>${es-sql.version}</version>
+        </dependency>
+
+        <!-- 其他依赖 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.8</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-lang/commons-lang -->
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+
+        <!-- 日志处理 -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.26</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.26</version>
+        </dependency>
+
+
+
+
+    </dependencies>
+
+    <build>
+        <!-- 指定打包的名字 -->
+        <finalName>${project.artifactId}</finalName>
+        <!--Maven会从项目的src/main/resources目录下查找资源，加载配置，不能随便改，这个如果不行可以去掉，使用下面的 复制配置插件-->
+        <resources>
+            <!--把配置文件放在jar包外面的config文件夹，方便修改-->
+            <resource>
+                <directory>src/main/resources</directory>
+                <!-- 当前项目下target目录新建一个项目名文件夹里面config文件夹 ${project.artifactId} -->
+                <targetPath>${project.basedir}/target/${project.artifactId}/config</targetPath>
+                <includes>
+                    <include>application.yml</include>
+                </includes>
+            </resource>
+        </resources>
+
+
+        <plugins>
+            <!--打包操作-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <!--<version>${maven.jar.plugin.version}</version>-->
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!--表示需要加入到类构建路径-->
+                            <addClasspath>true</addClasspath>
+                            <!--classpathPrefix指定生成的Manifest文件中Class-Path依赖lib前面都加上路径,构建出lib/xx.jar-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <!-- MAVEN插件打包SNAPSHOT包MANIFEST.MF中Class-Path带时间戳的问题 -->
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <mainClass>com.GitbookApplication</mainClass>
+                        </manifest>
+                    </archive>
+                    <!--打包排除-->
+                    <excludes>
+                        <exclude>application.yml</exclude>
+                    </excludes>
+                    <outputDirectory>
+                        ${project.build.directory}/${project.artifactId}
+                    </outputDirectory>
+
+                </configuration>
+            </plugin>
+
+            <!--拷贝依赖到jar外面的lib目录-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <!--<version>${maven.dependency.plugin.version}</version>-->
+                <executions>
+                    <execution>
+                        <id>copy-lib</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/${project.artifactId}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>compile</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 复制配置文件 -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- 触发条件 -->
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/target/${project.artifactId}/config</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <includes>
+                                        <include>application.yml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
